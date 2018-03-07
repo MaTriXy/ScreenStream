@@ -5,7 +5,9 @@ import android.util.Log
 import com.crashlytics.android.Crashlytics
 import info.dvkr.screenstream.di.koinModule
 import io.fabric.sdk.android.Fabric
+import org.koin.Koin
 import org.koin.android.ext.android.startKoin
+import org.koin.log.Logger
 import timber.log.Timber
 
 
@@ -19,8 +21,16 @@ class ScreenStreamApp : Application() {
         Timber.plant(CrashReportingTree())
         Timber.w("[${Thread.currentThread().name}] onCreate: Start")
 
+        Thread.setDefaultUncaughtExceptionHandler { thread: Thread, throwable: Throwable ->
+            Timber.e(throwable, "Uncaught throwable in thread ${thread.name}")
+        }
+
         // Set up DI
-        startKoin(this, listOf(koinModule))
+        startKoin(this, listOf(koinModule), logger = object : Logger {
+            override fun debug(msg: String) = Timber.d(msg)
+            override fun err(msg: String) = Timber.e(msg)
+            override fun log(msg: String) = Timber.d(msg)
+        })
 
         Timber.w("[${Thread.currentThread().name}] onCreate: End")
     }
